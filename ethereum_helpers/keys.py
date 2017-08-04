@@ -1,7 +1,9 @@
 from functools import partial
 from hashlib import sha3_256
+from hmac import HMAC
 from typing import (Union,
                     Type,
+                    Callable,
                     Dict,
                     Tuple)
 
@@ -10,19 +12,27 @@ from Cryptodome.Util import Counter
 from ecdsa import (SECP256k1,
                    SigningKey,
                    VerifyingKey)
-from ethereum_helpers import aes
-from ethereum_helpers.coding import (decode_hex,
-                                     big_endian_to_int)
-from ethereum_helpers.hashes import (scrypt_hash,
-                                     keccak_256_hash)
+from ecdsa.curves import Curve
+
+from . import aes
+from .coding import (decode_hex,
+                     big_endian_to_int)
+from .hashes import (scrypt_hash,
+                     keccak_256_hash)
+
+HashFunctionType = Callable[..., HMAC]
+KeyType = Union[SigningKey,
+                VerifyingKey]
+KeyClsType = Union[Type[SigningKey],
+                   Type[VerifyingKey]]
 
 
-def hex_bytes_to_key(key_cls: Union[Type[SigningKey],
-                                    Type[VerifyingKey]],
+def hex_bytes_to_key(key_cls: KeyClsType,
                      hex_bytes: bytes,
                      *,
-                     curve=SECP256k1,
-                     hash_function=sha3_256) -> SigningKey:
+                     curve: Curve = SECP256k1,
+                     hash_function: HashFunctionType = sha3_256
+                     ) -> KeyType:
     return key_cls.from_string(hex_bytes,
                                curve=curve,
                                hashfunc=hash_function)
@@ -36,7 +46,11 @@ hex_bytes_to_verifying_key = partial(hex_bytes_to_key,
 
 def load_signing_key(key_json: Dict[str, Union[str, int, dict]],
                      password: str) -> bytes:
-    crypto = key_json['crypto']
+    try:
+        crypto = key_json['crypto']
+    except KeyError:
+        crypto = key_json['Crypto']
+
     aes_key, head_mac_bytes = derived_key_parts(password=password,
                                                 kdf_params=crypto['kdfparams'])
     cipher_text = decode_hex(crypto['ciphertext'])
