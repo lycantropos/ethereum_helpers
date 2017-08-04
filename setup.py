@@ -3,7 +3,7 @@ from setuptools import (setup,
 
 setup(name='ethereum_helpers',
       packages=find_packages(),
-      version='0.0.0',
+      version='0.0.1',
       description='Helper functions for working with ethereum network.',
       author='Azat Ibrakov',
       author_email='azatibrakov@gmail.com',
