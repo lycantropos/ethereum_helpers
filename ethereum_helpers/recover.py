@@ -3,11 +3,11 @@ from typing import Tuple
 from ecdsa import SECP256k1
 from ecdsa.curves import Curve
 
-from . import jacobian_coordinates
 from .coding import (encode_number,
                      hex_string_to_int)
+from .coordinates import jacobian
+from .coordinates.utils import modular_multiplicative_inverse
 from .hashes import keccak_256_hash
-from .utils import inversion
 
 
 def verifying_key(signature: str,
@@ -34,8 +34,12 @@ def verifying_key_from_hash(message_hash: str,
                                      v=v,
                                      r=r,
                                      s=s)
-    result = (encode_number(left, 256, 32)
-              + encode_number(right, 256, 32))
+    result = (encode_number(left,
+                            base=256,
+                            min_length=32)
+              + encode_number(right,
+                              base=256,
+                              min_length=32))
 
     if len(result) != 64:
         err_msg = ('Invalid public key, '
@@ -67,11 +71,14 @@ def verifying_key_pair(message_hash: str,
     beta = pow((x ** 3 + a * x + b) % p, (p + 1) // 4, p)
     y = beta if v % 2 ^ beta % 2 else p - beta
     z = hex_string_to_int(message_hash)
-    g_z = jacobian_coordinates.multiply((g_x, g_y, 1), (n - z) % n)
-    xy = jacobian_coordinates.multiply((x, y, 1), s)
-    q_r = jacobian_coordinates.add(g_z, xy)
-    q = jacobian_coordinates.multiply(q_r, inversion(r, n))
-    return jacobian_coordinates.to_affine(q)
+    g_z = jacobian.multiply(point=(g_x, g_y, 1),
+                            multiplier=(n - z) % n)
+    xy = jacobian.multiply(point=(x, y, 1),
+                           multiplier=s)
+    q_r = jacobian.add(g_z, xy)
+    q = jacobian.multiply(point=q_r,
+                          multiplier=modular_multiplicative_inverse(r, n))
+    return jacobian.to_affine(q)
 
 
 def decode_signature(signature: str) -> Tuple[int, int, int]:

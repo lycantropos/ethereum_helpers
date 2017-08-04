@@ -1,36 +1,35 @@
-from typing import Tuple
-
 from ecdsa import SECP256k1
+from ethereum_helpers.types import (AffinePointType,
+                                    JacobianPointType)
 
-from .utils import inversion
-
-VectorType = Tuple[int, int, int]
+from .utils import modular_multiplicative_inverse
 
 
-def multiply(vector: VectorType,
+def multiply(*,
+             point: JacobianPointType,
              multiplier: int,
-             *,
-             order=SECP256k1.order) -> VectorType:
-    if vector[1] == 0 or multiplier == 0:
+             order: int = SECP256k1.order) -> JacobianPointType:
+    if point[1] == 0 or multiplier == 0:
         return 0, 0, 1
     if multiplier == 1:
-        return vector
+        return point
     if multiplier < 0 or multiplier >= order:
-        return multiply(vector, multiplier % order)
+        return multiply(point=point,
+                        multiplier=multiplier % order)
 
     quotient, remainder = divmod(multiplier, 2)
+    doubled_multiplied_point = double(multiply(point=point,
+                                               multiplier=quotient))
     if remainder == 0:
-        return double(multiply(vector, quotient))
+        return doubled_multiplied_point
     if remainder == 1:
-        return add(double(multiply(vector,
-                                   quotient)),
-                   vector)
+        return add(doubled_multiplied_point, point)
 
 
-def add(vector: VectorType,
-        other_vector: VectorType,
+def add(vector: JacobianPointType,
+        other_vector: JacobianPointType,
         *,
-        p=SECP256k1.curve.p()) -> VectorType:
+        p: int = SECP256k1.curve.p()) -> JacobianPointType:
     """
     Bernstein-Lange addition
 
@@ -69,7 +68,7 @@ def add(vector: VectorType,
 def double(vector,
            *,
            a: int = SECP256k1.curve.a(),
-           p: int = SECP256k1.curve.p()) -> VectorType:
+           p: int = SECP256k1.curve.p()) -> JacobianPointType:
     """
     Chudnovsky–Chudnovsky doubling
 
@@ -88,9 +87,9 @@ def double(vector,
     return result_x, result_y, result_z
 
 
-def to_affine(vector: VectorType,
+def to_affine(point: JacobianPointType,
               *,
-              p: int = SECP256k1.curve.p()) -> Tuple[int, int]:
-    vector_x, vector_y, vector_z = vector
-    z = inversion(vector_z, p)
+              p: int = SECP256k1.curve.p()) -> AffinePointType:
+    vector_x, vector_y, vector_z = point
+    z = modular_multiplicative_inverse(vector_z, p)
     return (vector_x * z ** 2) % p, (vector_y * z ** 3) % p
