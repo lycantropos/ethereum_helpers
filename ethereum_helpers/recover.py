@@ -14,8 +14,6 @@ def verifying_key_hex_bytes(signature: str,
                             *,
                             message: str) -> bytes:
     """
-    Recovers verifying key hex bytes from signature by message.
-
     E.g.:
 
         from ethereum_helpers import recover

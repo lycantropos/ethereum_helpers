@@ -21,8 +21,6 @@ def sign_message(message: str,
                  *,
                  signing_key_hex_string: str) -> str:
     """
-    Signs message by signing key hex string.
-
     E.g.:
 
         from ethereum_helpers.messages import sign_message
