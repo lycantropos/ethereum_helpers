@@ -10,6 +10,8 @@ from .coding import (encode_number,
 from .coordinates import affine
 from .coordinates.utils import modular_multiplicative_inverse
 from .hashes import keccak_256_hash
+from .restrictions import (R_LENGTH,
+                           S_LENGTH)
 from .types import AffinePointType
 
 secp256k_generator_point = SECP256k1.generator
@@ -23,7 +25,7 @@ def sign_message(message: str,
     message_hash = hash_message(message)
     v, r, s = signature_triplet(message_hash=message_hash,
                                 signing_key_hex_string=signing_key_hex_string)
-    return hex(r)[2:] + hex(s)[2:] + hex(v)[2:]
+    return hex(r)[2:].zfill(R_LENGTH) + hex(s)[2:].zfill(S_LENGTH) + hex(v)[2:]
 
 
 def hash_message(message: str,

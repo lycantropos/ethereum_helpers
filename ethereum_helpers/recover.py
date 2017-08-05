@@ -8,19 +8,21 @@ from .coding import (encode_number,
 from .coordinates import jacobian
 from .coordinates.utils import modular_multiplicative_inverse
 from .hashes import keccak_256_hash
+from .restrictions import (R_LENGTH,
+                           S_LENGTH)
 
 
 def verifying_key_hex_bytes(signature: str,
                             *,
                             message: str,
                             encoding: str = 'utf-8') -> bytes:
+    v, r, s = decode_signature(signature)
+
     prepended_message = ('\x19Ethereum Signed Message:\n'
                          + str(len(message))
                          + message)
     message_hash = (keccak_256_hash(prepended_message.encode(encoding))
                     .hexdigest())
-    v, r, s = decode_signature(signature)
-
     return verifying_key_hex_bytes_from_hash(message_hash,
                                              v=v,
                                              r=r,
@@ -84,7 +86,7 @@ def verifying_key_pair(message_hash: str,
 
 
 def decode_signature(signature: str) -> Tuple[int, int, int]:
-    r = hex_string_to_int(signature[:64])
-    s = hex_string_to_int(signature[64:128])
-    v = hex_string_to_int(signature[128:])
+    r = hex_string_to_int(signature[:R_LENGTH])
+    s = hex_string_to_int(signature[R_LENGTH:R_LENGTH + S_LENGTH])
+    v = hex_string_to_int(signature[R_LENGTH + S_LENGTH:])
     return v, r, s
