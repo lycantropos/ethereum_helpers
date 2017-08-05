@@ -12,29 +12,12 @@ from .hashes import keccak_256_hash
 
 def verifying_key_hex_bytes(signature: str,
                             *,
-                            message: str) -> bytes:
-    """
-    E.g.:
-
-        from ethereum_helpers import recover
-        from ethereum_helpers.keys import hex_bytes_to_signing_key
-        from ethereum_helpers.messages import sign_message
-
-        signing_key_hex_string = 'd6259296f278203e6e1b75f6f9e10e8a798e22a5c52b2fcfa97f9dc7877218e2'
-        signing_key_hex_bytes = bytes.fromhex(signing_key_hex_string)
-        signing_key = hex_bytes_to_signing_key(signing_key_hex_bytes)
-        verifying_key = signing_key.get_verifying_key()
-        message = 'Hello World!'
-        signature = sign_message(message,
-                                 signing_key_hex_string=signing_key_hex_string)
-        verifying_key_hex_bytes = recover.verifying_key_hex_bytes(signature,
-                                                                  message=message)
-        assert verifying_key.to_string() == verifying_key_hex_bytes
-    """
+                            message: str,
+                            encoding: str = 'utf-8') -> bytes:
     prepended_message = ('\x19Ethereum Signed Message:\n'
                          + str(len(message))
                          + message)
-    message_hash = (keccak_256_hash(prepended_message.encode('ascii'))
+    message_hash = (keccak_256_hash(prepended_message.encode(encoding))
                     .hexdigest())
     v, r, s = decode_signature(signature)
 

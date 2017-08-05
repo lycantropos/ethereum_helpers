@@ -20,29 +20,19 @@ secp256k_generator_point = (secp256k_generator_point.x(),
 def sign_message(message: str,
                  *,
                  signing_key_hex_string: str) -> str:
-    """
-    E.g.:
-
-        from ethereum_helpers.messages import sign_message
-
-        signing_key_hex_string = 'd6259296f278203e6e1b75f6f9e10e8a798e22a5c52b2fcfa97f9dc7877218e2'
-        message = 'Hello World!'
-        signature = sign_message(message,
-                                 signing_key_hex_string=signing_key_hex_string)
-        assert signature == '0x32f73d320caf637abe9212c2fd2baf9218e1f7f009c8b16c72932986f14fdc575ab242e7c270f5fb469ca5af70392d96ca0b43276acab4b2d6dcc4903453653a1b'
-    """
-
     message_hash = hash_message(message)
     v, r, s = signature_triplet(message_hash=message_hash,
                                 signing_key_hex_string=signing_key_hex_string)
     return hex(r)[2:] + hex(s)[2:] + hex(v)[2:]
 
 
-def hash_message(message: str) -> str:
+def hash_message(message: str,
+                 *,
+                 encoding: str = 'utf-8') -> str:
     prepended_message = ("\x19Ethereum Signed Message:\n"
                          + str(len(message))
                          + message)
-    return keccak_256_hash(prepended_message.encode('ascii')).hexdigest()
+    return keccak_256_hash(prepended_message.encode(encoding)).hexdigest()
 
 
 def signature_triplet(
