@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  ethereum_helpers:
+    build: .
+    image: lycantropos/ethereum_helpers:latest
+    volumes:
+      - .:/ethereum_helpers/
+    entrypoint: python3
+    command: setup.py test
+    extra_hosts:
+      - "dockerhost:$DOCKERHOST"  # for debugging
