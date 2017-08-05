@@ -1,8 +1,9 @@
 import codecs
 import string
 from functools import partial
+from typing import Union
 
-codes_by_bases = {
+characters_by_bases = {
     2: '01',
     8: string.octdigits,
     10: string.digits,
@@ -17,11 +18,11 @@ def encode_number(number: int,
                   *,
                   base: int,
                   min_length: int) -> bytes:
-    codes = codes_by_base(base)
+    characters = characters_by_base(base)
     result = bytes()
     while number > 0:
-        code = codes[number % base]
-        result = bytes([ord(code)]) + result
+        character = characters[number % base]
+        result = bytes([ord(character)]) + result
         number //= base
 
     pad_size = min_length - len(result)
@@ -33,39 +34,40 @@ def encode_number(number: int,
     return result
 
 
-def decode_number(text: str,
+def decode_number(bytes_or_string: Union[str, bytes],
                   *,
                   base: int) -> int:
     if base == 16:
-        text = text.lower()
+        bytes_or_string = bytes_or_string.lower()
 
-    if base == 256 and isinstance(text, str):
-        text = bytes(bytearray.fromhex(text))
+    if base == 256 and isinstance(bytes_or_string, str):
+        bytes_or_string = bytes(bytearray.fromhex(bytes_or_string))
 
     if base == 256:
-        def extract(byte: int) -> int:
+        def position(byte: int) -> int:
             return byte
     else:
-        codes = codes_by_base(base)
-        codes_positions = {position: code
-                           for position, code in enumerate(codes)}
+        characters = characters_by_base(base)
+        characters_positions = {position: character
+                                for (position,
+                                     character) in enumerate(characters)}
 
-        def extract(char_or_byte: int) -> int:
-            char = (char_or_byte
-                    if isinstance(char_or_byte, str)
-                    else chr(char_or_byte))
-            return codes_positions[char]
+        def position(byte_or_character: Union[int, str]) -> int:
+            char = (byte_or_character
+                    if isinstance(byte_or_character, str)
+                    else chr(byte_or_character))
+            return characters_positions[char]
 
     result = 0
-    for char_or_byte in text:
+    for byte_or_character in bytes_or_string:
         result *= base
-        result += extract(char_or_byte)
+        result += position(byte_or_character)
     return result
 
 
-def codes_by_base(base: int) -> str:
+def characters_by_base(base: int) -> str:
     try:
-        return codes_by_bases[base]
+        return characters_by_bases[base]
     except KeyError:
         raise ValueError(f'Invalid base: {base}.')
 
