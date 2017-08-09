@@ -59,8 +59,8 @@ def verifying_key_pair(message_hash: str,
                        r: int,
                        s: int,
                        curve: Curve = SECP256k1) -> Tuple[int, int]:
-    if not (27 <= v <= 34):
-        raise ValueError(f'"v" must in range 27-34, '
+    if not (27 <= v <= 28):
+        raise ValueError(f'"v" must be equal to 27 or 28, '
                          f'but found {v}')
 
     curve_fp = curve.curve
@@ -88,5 +88,5 @@ def verifying_key_pair(message_hash: str,
 def decode_signature(signature: str) -> Tuple[int, int, int]:
     r = hex_string_to_int(signature[:R_LENGTH])
     s = hex_string_to_int(signature[R_LENGTH:R_LENGTH + S_LENGTH])
-    v = hex_string_to_int(signature[R_LENGTH + S_LENGTH:])
+    v = hex_string_to_int(signature[R_LENGTH + S_LENGTH:]) or 27
     return v, r, s

@@ -1,6 +1,7 @@
 import hmac
 from hashlib import sha256
-from typing import Tuple
+from typing import (Callable,
+                    Tuple)
 
 from ecdsa import SECP256k1
 
@@ -28,13 +29,21 @@ def sign_message(message: str,
     return hex(r)[2:].zfill(R_LENGTH) + hex(s)[2:].zfill(S_LENGTH) + hex(v)[2:]
 
 
+def add_prefix(message: str) -> str:
+    # more info at
+    # https://github.com/ethereum/go-ethereum/commit/b59c8399fbe42390a3d41e945d03b1f21c1a9b8d
+    return ("\x19Ethereum Signed Message:\n"
+            + str(len(message))
+            + message)
+
+
 def hash_message(message: str,
                  *,
+                 message_modifier: Callable[[str], str] = add_prefix,
                  encoding: str = 'utf-8') -> str:
-    prepended_message = ("\x19Ethereum Signed Message:\n"
-                         + str(len(message))
-                         + message)
-    return keccak_256_hash(prepended_message.encode(encoding)).hexdigest()
+    modified_message = message_modifier(message)
+    encoded_message = modified_message.encode(encoding)
+    return keccak_256_hash(encoded_message).hexdigest()
 
 
 def signature_triplet(
@@ -70,15 +79,20 @@ def deterministic_generate_k(*,
                                        min_length=32)
 
     v = b'\x01' * 32
-    k = b'\x00' * 32
-    k = hmac.new(k,
-                 v + b'\x00' + signing_key_bytes + message_hash_bytes,
+    key = b'\x00' * 32
+    key = hmac.new(key=key,
+                   msg=v + b'\x00' + signing_key_bytes + message_hash_bytes,
+                   digestmod=sha256).digest()
+    v = hmac.new(key=key,
+                 msg=v,
                  digestmod=sha256).digest()
-    v = hmac.new(k, v,
+    key = hmac.new(key=key,
+                   msg=v + b'\x01' + signing_key_bytes + message_hash_bytes,
+                   digestmod=sha256).digest()
+    v = hmac.new(key=key,
+                 msg=v,
                  digestmod=sha256).digest()
-    k = hmac.new(k, v + b'\x01' + signing_key_bytes + message_hash_bytes,
-                 digestmod=sha256).digest()
-    v = hmac.new(k, v, sha256).digest()
-    return decode_number(hmac.new(k, v,
+    return decode_number(hmac.new(key=key,
+                                  msg=v,
                                   digestmod=sha256).digest(),
                          base=256)

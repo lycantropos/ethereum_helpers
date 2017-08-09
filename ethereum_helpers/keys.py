@@ -80,7 +80,8 @@ def derived_key_parts(*,
                               r=kdf_params['r'],
                               n=kdf_params['n'])
     if len(derived_key) < 32:
-        raise ValueError('Derived key must be at least 32 bytes long')
+        err_msg = 'Derived key must be at least 32 bytes long.'
+        raise ValueError(err_msg)
     return derived_key[:16], derived_key[16:32]
 
 
@@ -91,8 +92,9 @@ def validate_mac(*,
     mac_bytes = head_mac_bytes + cipher_text
     mac = keccak_256_hash(mac_bytes).digest()
     if mac != predicted_mac:
-        raise ValueError('MAC mismatch. '
-                         'Password seems to be incorrect.')
+        err_msg = ('MAC mismatch. '
+                   'Password seems to be incorrect.')
+        raise ValueError(err_msg)
 
 
 def initial_value_str_to_int(string: str) -> int:
