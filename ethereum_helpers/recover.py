@@ -88,5 +88,7 @@ def verifying_key_pair(message_hash: str,
 def decode_signature(signature: str) -> Tuple[int, int, int]:
     r = hex_string_to_int(signature[:R_LENGTH])
     s = hex_string_to_int(signature[R_LENGTH:R_LENGTH + S_LENGTH])
-    v = hex_string_to_int(signature[R_LENGTH + S_LENGTH:]) or 27
+    v = hex_string_to_int(signature[R_LENGTH + S_LENGTH:])
+    if v in {0, 1}:
+        v += 27
     return v, r, s
