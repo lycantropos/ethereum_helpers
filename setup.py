@@ -16,11 +16,10 @@ setup(name='ethereum_helpers',
           'scrypt>=0.8.0',
           'pycryptodomex>=3.4.6',
       ],
-      setup_requires=['pytest-runner'],
+      setup_requires=['pytest-runner>=2.11'],
       tests_require=[
-          'pydevd',  # debugging
+          'pydevd>=1.0.0',  # debugging
           'pytest>=3.0.5',
           'pytest-cov>=2.4.0',
           'hypothesis>=3.13.0',
-          'pytz'  # working with datetime objects in hypothesis
       ])
