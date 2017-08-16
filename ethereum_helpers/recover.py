@@ -1,4 +1,5 @@
-from typing import Tuple
+from typing import (Callable,
+                    Tuple)
 
 from ecdsa import SECP256k1
 from ecdsa.curves import Curve
@@ -7,22 +8,23 @@ from .coding import (encode_number,
                      hex_string_to_int)
 from .coordinates import jacobian
 from .coordinates.utils import modular_multiplicative_inverse
-from .hashes import keccak_256_hash
+from .messages import (add_prefix,
+                       hash_message)
 from .restrictions import (R_LENGTH,
                            S_LENGTH)
 
 
-def verifying_key_hex_bytes(signature: str,
-                            *,
-                            message: str,
-                            encoding: str = 'utf-8') -> bytes:
+def verifying_key_hex_bytes(
+        signature: str,
+        *,
+        message: str,
+        message_modifier: Callable[[str], str] = add_prefix,
+        encoding: str = 'utf-8') -> bytes:
     v, r, s = decode_signature(signature)
 
-    prepended_message = ('\x19Ethereum Signed Message:\n'
-                         + str(len(message))
-                         + message)
-    message_hash = (keccak_256_hash(prepended_message.encode(encoding))
-                    .hexdigest())
+    message_hash = hash_message(message,
+                                message_modifier=message_modifier,
+                                encoding=encoding)
     return verifying_key_hex_bytes_from_hash(message_hash,
                                              v=v,
                                              r=r,
